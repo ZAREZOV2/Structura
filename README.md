@@ -56,12 +56,15 @@ The local database is a single SQLite file (`apps/api/local.db`); no Docker or P
 
 ## Deploying to Cloudflare Workers (D1)
 
-The API runs on the Cloudflare Workers runtime backed by a **D1** (serverless SQLite) database.
+A **single** Cloudflare Worker serves both the API (Elysia + **D1** serverless SQLite) and the
+React SPA's static assets. Because the frontend talks to the API on the same origin, there is no
+CORS or cross-site cookie configuration to manage. The root `wrangler.jsonc` defines this Worker;
+the build command builds the SPA into `apps/web/dist`, which the Worker serves.
 
 ```bash
-cd apps/api
+# from the repo root
 
-# 1. create the D1 database, then paste the returned id into wrangler.toml
+# 1. create the D1 database, then paste the returned id into wrangler.jsonc
 bunx wrangler d1 create structura
 
 # 2. apply migrations to the remote D1 database
@@ -71,15 +74,19 @@ bunx wrangler d1 migrations apply structura --remote
 bunx wrangler secret put JWT_ACCESS_SECRET
 bunx wrangler secret put JWT_REFRESH_SECRET
 
-# 4. deploy the Worker
+# 4. build the SPA, then deploy the Worker (API + assets)
+bun run build:web
 bunx wrangler deploy
 ```
 
-The React frontend deploys as a static site to **Cloudflare Pages**:
+When deploying via the Cloudflare **Workers Builds** Git integration, set:
 
 - **Build command:** `bun install && bun run --filter @structura/web build`
-- **Output directory:** `apps/web/dist`
-- Set `VITE_API_URL` to the deployed Worker URL, and `WEB_ORIGIN` (Worker var) to the Pages URL.
+- **Deploy command:** `bunx wrangler deploy` (run from the repo root)
+
+D1 migrations are **not** run by `wrangler deploy` — apply them with
+`bun run d1:migrate:remote` (step 2 above) whenever the schema changes. The `migrations_dir`
+key in `wrangler.jsonc` points that command at `apps/api/drizzle`.
 
 ## Scripts
 
@@ -95,8 +102,9 @@ The React frontend deploys as a static site to **Cloudflare Pages**:
 | `bun run db:migrate`  | Apply migrations (local bun:sqlite)  |
 | `bun run db:studio`   | Open Drizzle Studio                  |
 
-From `apps/api`, Cloudflare-specific scripts: `cf:dev` (run the Worker locally via Miniflare),
-`deploy` (`wrangler deploy`), and `d1:migrate:local` / `d1:migrate:remote`.
+Cloudflare-specific root scripts: `cf:dev` (run the combined Worker locally via Miniflare),
+`build:web` (build the SPA), `deploy` (`wrangler deploy`), and `d1:migrate:local` /
+`d1:migrate:remote`.
 
 ## Roadmap
 
