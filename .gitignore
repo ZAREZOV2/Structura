@@ -27,6 +27,14 @@ bun-debug.log*
 # drizzle
 apps/api/drizzle/meta/_journal.json.bak
 
+# local sqlite (bun:sqlite) database files
+*.db
+*.db-shm
+*.db-wal
+
+# cloudflare wrangler / miniflare local state
+.wrangler/
+
 # misc
 coverage/
 .cache/

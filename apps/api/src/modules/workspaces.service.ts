@@ -1,9 +1,9 @@
 import { and, eq } from 'drizzle-orm';
-import { db } from '../db';
-import { workspaceMembers, type workspaceRole, workspaces } from '../db/schema';
+import { getDb } from '../db/context';
+import { type WorkspaceRole, workspaceMembers, workspaces } from '../db/schema';
 import { ForbiddenError, NotFoundError } from '../lib/errors';
 
-export type WorkspaceRole = (typeof workspaceRole.enumValues)[number];
+export type { WorkspaceRole };
 
 export interface WorkspaceSummary {
   id: string;
@@ -16,7 +16,7 @@ export interface WorkspaceSummary {
 const WRITE_ROLES: WorkspaceRole[] = ['owner', 'admin', 'editor'];
 
 export async function listWorkspacesForUser(userId: string): Promise<WorkspaceSummary[]> {
-  const rows = await db
+  const rows = await getDb()
     .select({
       id: workspaces.id,
       name: workspaces.name,
@@ -36,7 +36,7 @@ export async function getMembershipRole(
   workspaceId: string,
   userId: string,
 ): Promise<WorkspaceRole | null> {
-  const member = await db.query.workspaceMembers.findFirst({
+  const member = await getDb().query.workspaceMembers.findFirst({
     where: and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, userId)),
   });
   return member?.role ?? null;
@@ -62,37 +62,43 @@ export async function createWorkspace(input: {
   icon?: string | null;
   ownerId: string;
 }): Promise<WorkspaceSummary> {
-  return db.transaction(async (tx) => {
-    const [workspace] = await tx
-      .insert(workspaces)
-      .values({ name: input.name, icon: input.icon ?? null, ownerId: input.ownerId })
-      .returning();
-    if (!workspace) throw new Error('Failed to create workspace');
+  // D1 has no interactive transactions, so insert sequentially and roll back the
+  // workspace by hand if attaching the owner membership fails.
+  const db = getDb();
+  const [workspace] = await db
+    .insert(workspaces)
+    .values({ name: input.name, icon: input.icon ?? null, ownerId: input.ownerId })
+    .returning();
+  if (!workspace) throw new Error('Failed to create workspace');
 
-    await tx
+  try {
+    await db
       .insert(workspaceMembers)
       .values({ workspaceId: workspace.id, userId: input.ownerId, role: 'owner' });
+  } catch (error) {
+    await db.delete(workspaces).where(eq(workspaces.id, workspace.id));
+    throw error;
+  }
 
-    return {
-      id: workspace.id,
-      name: workspace.name,
-      icon: workspace.icon,
-      role: 'owner' as const,
-      createdAt: workspace.createdAt.toISOString(),
-    };
-  });
+  return {
+    id: workspace.id,
+    name: workspace.name,
+    icon: workspace.icon,
+    role: 'owner' as const,
+    createdAt: workspace.createdAt.toISOString(),
+  };
 }
 
 export async function updateWorkspace(
   id: string,
   patch: { name?: string; icon?: string | null },
 ): Promise<void> {
-  await db
+  await getDb()
     .update(workspaces)
     .set({ ...patch, updatedAt: new Date() })
     .where(eq(workspaces.id, id));
 }
 
 export async function deleteWorkspace(id: string): Promise<void> {
-  await db.delete(workspaces).where(eq(workspaces.id, id));
+  await getDb().delete(workspaces).where(eq(workspaces.id, id));
 }

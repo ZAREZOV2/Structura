@@ -9,15 +9,18 @@
     "./app": "./src/app.ts"
   },
   "scripts": {
-    "dev": "bun --env-file=../../.env run --watch src/index.ts",
+    "dev": "bun run --watch src/index.ts",
     "start": "bun run src/index.ts",
     "build": "bun build src/index.ts --target bun --outdir dist",
     "typecheck": "tsc --noEmit",
-    "test": "bun --env-file=../../.env test",
+    "test": "DATABASE_PATH=:memory: bun test",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "bun --env-file=../../.env run src/db/migrate.ts",
-    "db:push": "bun --env-file=../../.env x drizzle-kit push",
-    "db:studio": "bun --env-file=../../.env x drizzle-kit studio"
+    "db:migrate": "bun run src/db/migrate.ts",
+    "db:studio": "bun x drizzle-kit studio",
+    "cf:dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "d1:migrate:local": "wrangler d1 migrations apply structura --local",
+    "d1:migrate:remote": "wrangler d1 migrations apply structura --remote"
   },
   "dependencies": {
     "@elysiajs/cors": "^1.2.0",
@@ -26,11 +29,12 @@
     "@structura/shared": "workspace:*",
     "drizzle-orm": "^0.38.3",
     "elysia": "^1.2.10",
-    "fractional-indexing": "^3.2.0",
-    "postgres": "^3.4.5"
+    "fractional-indexing": "^3.2.0"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241218.0",
     "@types/bun": "^1.1.14",
-    "drizzle-kit": "^0.30.1"
+    "drizzle-kit": "^0.30.1",
+    "wrangler": "^3.99.0"
   }
 }

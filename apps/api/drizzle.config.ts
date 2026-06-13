@@ -3,9 +3,9 @@ import { defineConfig } from 'drizzle-kit';
 export default defineConfig({
   schema: './src/db/schema.ts',
   out: './drizzle',
-  dialect: 'postgresql',
+  dialect: 'sqlite',
   dbCredentials: {
-    url: process.env.DATABASE_URL ?? 'postgres://structura:structura@localhost:5432/structura',
+    url: process.env.DATABASE_PATH ?? './local.db',
   },
   verbose: true,
   strict: true,

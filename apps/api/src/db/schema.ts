@@ -1,37 +1,47 @@
 import { sql } from 'drizzle-orm';
 import {
-  type AnyPgColumn,
-  boolean,
-  customType,
+  type AnySQLiteColumn,
+  blob,
   index,
-  jsonb,
-  pgEnum,
-  pgTable,
+  integer,
   primaryKey,
+  sqliteTable,
   text,
-  timestamp,
   uniqueIndex,
-  uuid,
-} from 'drizzle-orm/pg-core';
+} from 'drizzle-orm/sqlite-core';
 
-/** Raw bytea column for storing the binary Yjs document state. */
-const bytea = customType<{ data: Uint8Array; default: false }>({
-  dataType() {
-    return 'bytea';
-  },
-});
+/**
+ * SQLite schema (Cloudflare D1 in production, bun:sqlite for local dev & tests).
+ *
+ * Notes on type choices vs. the original PostgreSQL schema:
+ * - UUID primary keys are stored as `text` and generated with `crypto.randomUUID`
+ *   (available in both Bun and the Workers runtime).
+ * - Timestamps use `integer` in `timestamp` mode so Drizzle returns `Date`s.
+ * - JSON document content uses `text` in `json` mode (auto stringify/parse).
+ * - Binary Yjs state uses `blob`.
+ */
+
+export const WORKSPACE_ROLES = ['owner', 'admin', 'editor', 'viewer'] as const;
+export type WorkspaceRole = (typeof WORKSPACE_ROLES)[number];
+
+const id = () =>
+  text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID());
 
 const timestamps = {
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
 };
 
-export const workspaceRole = pgEnum('workspace_role', ['owner', 'admin', 'editor', 'viewer']);
-
-export const users = pgTable(
+export const users = sqliteTable(
   'users',
   {
-    id: uuid('id').primaryKey().defaultRandom(),
+    id: id(),
     email: text('email').notNull(),
     passwordHash: text('password_hash').notNull(),
     displayName: text('display_name').notNull(),
@@ -41,13 +51,13 @@ export const users = pgTable(
   (t) => [uniqueIndex('users_email_unique').on(t.email)],
 );
 
-export const workspaces = pgTable(
+export const workspaces = sqliteTable(
   'workspaces',
   {
-    id: uuid('id').primaryKey().defaultRandom(),
+    id: id(),
     name: text('name').notNull(),
     icon: text('icon'),
-    ownerId: uuid('owner_id')
+    ownerId: text('owner_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     ...timestamps,
@@ -55,17 +65,19 @@ export const workspaces = pgTable(
   (t) => [index('workspaces_owner_idx').on(t.ownerId)],
 );
 
-export const workspaceMembers = pgTable(
+export const workspaceMembers = sqliteTable(
   'workspace_members',
   {
-    workspaceId: uuid('workspace_id')
+    workspaceId: text('workspace_id')
       .notNull()
       .references(() => workspaces.id, { onDelete: 'cascade' }),
-    userId: uuid('user_id')
+    userId: text('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    role: workspaceRole('role').notNull().default('editor'),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    role: text('role', { enum: WORKSPACE_ROLES }).notNull().default('editor'),
+    createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .$defaultFn(() => new Date()),
   },
   (t) => [
     primaryKey({ columns: [t.workspaceId, t.userId] }),
@@ -73,14 +85,14 @@ export const workspaceMembers = pgTable(
   ],
 );
 
-export const pages = pgTable(
+export const pages = sqliteTable(
   'pages',
   {
-    id: uuid('id').primaryKey().defaultRandom(),
-    workspaceId: uuid('workspace_id')
+    id: id(),
+    workspaceId: text('workspace_id')
       .notNull()
       .references(() => workspaces.id, { onDelete: 'cascade' }),
-    parentId: uuid('parent_id').references((): AnyPgColumn => pages.id, {
+    parentId: text('parent_id').references((): AnySQLiteColumn => pages.id, {
       onDelete: 'cascade',
     }),
     title: text('title').notNull().default('Untitled'),
@@ -89,28 +101,33 @@ export const pages = pgTable(
     // Fractional index for ordering among siblings (e.g. "a0", "a1").
     position: text('position').notNull().default('a0'),
     // Editor document serialised as JSON (used for rendering & plain-text extraction).
-    content: jsonb('content').$type<unknown>().notNull().default([]),
+    content: text('content', { mode: 'json' })
+      .$type<unknown>()
+      .notNull()
+      .$defaultFn(() => []),
     // Binary Yjs document state for realtime collaboration.
-    yjsState: bytea('yjs_state'),
-    isArchived: boolean('is_archived').notNull().default(false),
-    createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+    yjsState: blob('yjs_state'),
+    isArchived: integer('is_archived', { mode: 'boolean' }).notNull().default(false),
+    createdBy: text('created_by').references(() => users.id, { onDelete: 'set null' }),
     ...timestamps,
   },
   (t) => [index('pages_workspace_idx').on(t.workspaceId), index('pages_parent_idx').on(t.parentId)],
 );
 
-export const links = pgTable(
+export const links = sqliteTable(
   'links',
   {
-    id: uuid('id').primaryKey().defaultRandom(),
-    sourcePageId: uuid('source_page_id')
+    id: id(),
+    sourcePageId: text('source_page_id')
       .notNull()
       .references(() => pages.id, { onDelete: 'cascade' }),
-    targetPageId: uuid('target_page_id')
+    targetPageId: text('target_page_id')
       .notNull()
       .references(() => pages.id, { onDelete: 'cascade' }),
     context: text('context'),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .$defaultFn(() => new Date()),
   },
   (t) => [
     uniqueIndex('links_source_target_unique').on(t.sourcePageId, t.targetPageId),
@@ -118,26 +135,28 @@ export const links = pgTable(
   ],
 );
 
-export const tags = pgTable(
+export const tags = sqliteTable(
   'tags',
   {
-    id: uuid('id').primaryKey().defaultRandom(),
-    workspaceId: uuid('workspace_id')
+    id: id(),
+    workspaceId: text('workspace_id')
       .notNull()
       .references(() => workspaces.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .$defaultFn(() => new Date()),
   },
   (t) => [uniqueIndex('tags_workspace_name_unique').on(t.workspaceId, t.name)],
 );
 
-export const pageTags = pgTable(
+export const pageTags = sqliteTable(
   'page_tags',
   {
-    pageId: uuid('page_id')
+    pageId: text('page_id')
       .notNull()
       .references(() => pages.id, { onDelete: 'cascade' }),
-    tagId: uuid('tag_id')
+    tagId: text('tag_id')
       .notNull()
       .references(() => tags.id, { onDelete: 'cascade' }),
   },
