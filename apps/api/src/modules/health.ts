@@ -1,20 +1,21 @@
 import { sql } from 'drizzle-orm';
 import { Elysia, t } from 'elysia';
-import { db } from '../db';
+import { getDb } from '../db/context';
+import { uptime } from '../env';
 
 export const healthModule = new Elysia({ name: 'health' }).get(
   '/health',
   async () => {
     let database = 'ok';
     try {
-      await db.execute(sql`select 1`);
+      await getDb().run(sql`select 1`);
     } catch {
       database = 'unavailable';
     }
 
     return {
       status: 'ok' as const,
-      uptime: process.uptime(),
+      uptime: uptime(),
       database,
       timestamp: new Date().toISOString(),
     };

@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, isNull } from 'drizzle-orm';
 import { generateKeyBetween } from 'fractional-indexing';
-import { db } from '../db';
+import { getDb } from '../db/context';
 import { pages } from '../db/schema';
 import { NotFoundError } from '../lib/errors';
 
@@ -33,7 +33,7 @@ function toNode(row: PageRow): PageNode {
 }
 
 export async function listPages(workspaceId: string): Promise<PageNode[]> {
-  const rows = await db
+  const rows = await getDb()
     .select()
     .from(pages)
     .where(and(eq(pages.workspaceId, workspaceId), eq(pages.isArchived, false)))
@@ -42,7 +42,7 @@ export async function listPages(workspaceId: string): Promise<PageNode[]> {
 }
 
 export async function getPageById(id: string): Promise<PageRow | undefined> {
-  return db.query.pages.findFirst({ where: eq(pages.id, id) });
+  return getDb().query.pages.findFirst({ where: eq(pages.id, id) });
 }
 
 export async function getPageOrThrow(id: string): Promise<PageRow> {
@@ -56,7 +56,7 @@ async function lastChildPosition(
   workspaceId: string,
   parentId: string | null,
 ): Promise<string | null> {
-  const [row] = await db
+  const [row] = await getDb()
     .select({ position: pages.position })
     .from(pages)
     .where(
@@ -80,7 +80,7 @@ export async function createPage(input: {
   const last = await lastChildPosition(input.workspaceId, input.parentId);
   const position = generateKeyBetween(last, null);
 
-  const [page] = await db
+  const [page] = await getDb()
     .insert(pages)
     .values({
       workspaceId: input.workspaceId,
@@ -98,7 +98,7 @@ export async function updatePage(
   id: string,
   patch: { title?: string; icon?: string | null; coverUrl?: string | null; content?: unknown },
 ): Promise<PageNode> {
-  const [page] = await db
+  const [page] = await getDb()
     .update(pages)
     .set({ ...patch, updatedAt: new Date() })
     .where(eq(pages.id, id))
@@ -109,7 +109,7 @@ export async function updatePage(
 
 async function positionOf(id: string | null | undefined): Promise<string | null> {
   if (!id) return null;
-  const row = await db.query.pages.findFirst({ where: eq(pages.id, id) });
+  const row = await getDb().query.pages.findFirst({ where: eq(pages.id, id) });
   return row?.position ?? null;
 }
 
@@ -135,7 +135,7 @@ export async function movePage(
 
   const position = generateKeyBetween(prevPos, nextPos);
 
-  const [updated] = await db
+  const [updated] = await getDb()
     .update(pages)
     .set({ parentId: target.parentId, position, updatedAt: new Date() })
     .where(eq(pages.id, id))
@@ -145,7 +145,7 @@ export async function movePage(
 }
 
 export async function setArchived(id: string, isArchived: boolean): Promise<PageNode> {
-  const [page] = await db
+  const [page] = await getDb()
     .update(pages)
     .set({ isArchived, updatedAt: new Date() })
     .where(eq(pages.id, id))
@@ -155,7 +155,7 @@ export async function setArchived(id: string, isArchived: boolean): Promise<Page
 }
 
 export async function deletePage(id: string): Promise<void> {
-  await db.delete(pages).where(eq(pages.id, id));
+  await getDb().delete(pages).where(eq(pages.id, id));
 }
 
 export { toNode };

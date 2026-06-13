@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { db } from '../db';
+import { getDb } from '../db/context';
 import { users } from '../db/schema';
 import { hashPassword } from '../lib/password';
 
@@ -24,11 +24,11 @@ export function toPublicUser(user: UserRow): PublicUser {
 }
 
 export function findUserByEmail(email: string): Promise<UserRow | undefined> {
-  return db.query.users.findFirst({ where: eq(users.email, email.toLowerCase()) });
+  return getDb().query.users.findFirst({ where: eq(users.email, email.toLowerCase()) });
 }
 
 export function findUserById(id: string): Promise<UserRow | undefined> {
-  return db.query.users.findFirst({ where: eq(users.id, id) });
+  return getDb().query.users.findFirst({ where: eq(users.id, id) });
 }
 
 export async function createUser(input: {
@@ -37,7 +37,7 @@ export async function createUser(input: {
   displayName: string;
 }): Promise<UserRow> {
   const passwordHash = await hashPassword(input.password);
-  const [user] = await db
+  const [user] = await getDb()
     .insert(users)
     .values({
       email: input.email.toLowerCase(),

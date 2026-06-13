@@ -9,24 +9,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: structura
-          POSTGRES_PASSWORD: structura
-          POSTGRES_DB: structura
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U structura -d structura"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
-
-    env:
-      DATABASE_URL: postgres://structura:structura@localhost:5432/structura
-
     steps:
       - uses: actions/checkout@v4
 
@@ -43,10 +25,9 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
-      - name: Apply migrations
-        run: |
-          cp .env.example .env
-          bun run db:migrate
+      - name: Apply migrations (smoke test against bun:sqlite)
+        run: bun run db:migrate
+        working-directory: apps/api
 
       - name: Test
         run: bun run test

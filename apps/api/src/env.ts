@@ -1,25 +1,24 @@
 /**
- * Centralised, validated access to environment variables.
- * Fails fast at startup if a required variable is missing.
+ * Centralised access to configuration. Values come from `process.env`, which is
+ * populated by Bun locally and by the Workers runtime (with `nodejs_compat`,
+ * Cloudflare exposes `[vars]` and secrets on `process.env`).
  */
 
-function required(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${name}`);
-  }
-  return value;
-}
+const proc: { env: Record<string, string | undefined>; uptime?: () => number } =
+  typeof process !== 'undefined'
+    ? (process as unknown as { env: Record<string, string | undefined>; uptime?: () => number })
+    : { env: {} };
 
 function optional(name: string, fallback: string): string {
-  return process.env[name] ?? fallback;
+  return proc.env[name] ?? fallback;
 }
 
 export const env = {
   nodeEnv: optional('NODE_ENV', 'development'),
-  isProduction: process.env.NODE_ENV === 'production',
+  isProduction: proc.env.NODE_ENV === 'production',
   port: Number(optional('API_PORT', '3000')),
-  databaseUrl: required('DATABASE_URL'),
+  // Local Bun/bun:sqlite database file (ignored on Workers, which use the D1 binding).
+  databasePath: optional('DATABASE_PATH', './local.db'),
   jwt: {
     accessSecret: optional('JWT_ACCESS_SECRET', 'dev-access-secret-change-me'),
     refreshSecret: optional('JWT_REFRESH_SECRET', 'dev-refresh-secret-change-me'),
@@ -28,3 +27,5 @@ export const env = {
   },
   webOrigin: optional('WEB_ORIGIN', 'http://localhost:5173'),
 } as const;
+
+export const uptime = (): number => proc.uptime?.() ?? 0;
