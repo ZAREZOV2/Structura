@@ -5,6 +5,8 @@ import { env } from './env';
 import { AppError } from './lib/errors';
 import { authModule } from './modules/auth';
 import { healthModule } from './modules/health';
+import { pagesModule } from './modules/pages';
+import { workspacesModule } from './modules/workspaces';
 
 /**
  * Builds the Elysia application. Exported separately from the entrypoint so it
@@ -29,6 +31,8 @@ export const app = new Elysia()
         tags: [
           { name: 'Health', description: 'Service health' },
           { name: 'Auth', description: 'Authentication & sessions' },
+          { name: 'Workspaces', description: 'Workspaces & membership' },
+          { name: 'Pages', description: 'Page tree' },
         ],
       },
     }),
@@ -55,6 +59,8 @@ export const app = new Elysia()
   })
   .get('/', () => ({ name: 'structura-api', version: '0.0.0' }))
   .use(healthModule)
-  .use(authModule);
+  .use(authModule)
+  .use(workspacesModule)
+  .use(pagesModule);
 
 export type App = typeof app;

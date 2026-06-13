@@ -1,23 +1,48 @@
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
-import { api } from '../lib/api';
+import { PageView } from '../components/PageView';
+import { Sidebar } from '../components/Sidebar';
+import { usePageMutations, usePageTree } from '../features/pages';
+import { buildTree } from '../features/types';
+import { useActiveWorkspace } from '../features/workspace';
 
 export function DashboardPage() {
   const { user, logout } = useAuth();
-  const { data: health } = useQuery({
-    queryKey: ['health'],
-    queryFn: async () => {
-      const { data, error } = await api.health.get();
-      if (error) throw error;
-      return data;
-    },
-  });
+  const { workspace, isLoading: wsLoading } = useActiveWorkspace();
+  const workspaceId = workspace?.id ?? null;
+
+  const { data: pages } = usePageTree(workspaceId);
+  const mutations = usePageMutations(workspaceId);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const tree = pages ? buildTree(pages) : [];
+
+  useEffect(() => {
+    if (selectedId && pages && !pages.some((p) => p.id === selectedId)) {
+      setSelectedId(null);
+    }
+  }, [pages, selectedId]);
+
+  if (wsLoading || !workspace) {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-neutral-500">
+        Setting up your workspace…
+      </div>
+    );
+  }
 
   return (
-    <main className="min-h-screen bg-neutral-50 text-neutral-900">
-      <header className="flex items-center justify-between border-b border-neutral-200 bg-white px-6 py-3">
-        <span className="font-semibold">Structura</span>
-        <div className="flex items-center gap-3 text-sm">
+    <div className="flex min-h-screen bg-white text-neutral-900">
+      <Sidebar
+        workspaceName={workspace.name}
+        tree={tree}
+        selectedId={selectedId}
+        onSelect={setSelectedId}
+        mutations={mutations}
+      />
+
+      <div className="flex flex-1 flex-col">
+        <header className="flex items-center justify-end gap-3 border-b border-neutral-200 px-6 py-2 text-sm">
           <span className="text-neutral-500">{user?.email}</span>
           <button
             type="button"
@@ -26,28 +51,18 @@ export function DashboardPage() {
           >
             Log out
           </button>
-        </div>
-      </header>
+        </header>
 
-      <section className="mx-auto max-w-2xl p-6">
-        <h1 className="text-2xl font-semibold">Welcome, {user?.displayName}</h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          You are signed in. Workspaces and pages are coming next.
-        </p>
-
-        <div className="mt-6 rounded-lg border border-neutral-200 bg-white p-4 text-sm">
-          <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">API status</p>
-          <p className="mt-1">
-            Status: <span className="font-medium text-green-600">{health?.status ?? '…'}</span>
-            {health && (
-              <>
-                {' '}
-                · Database: <span className="font-medium">{health.database}</span>
-              </>
-            )}
-          </p>
-        </div>
-      </section>
-    </main>
+        <main className="flex-1 overflow-y-auto">
+          {selectedId ? (
+            <PageView pageId={selectedId} workspaceId={workspace.id} />
+          ) : (
+            <div className="flex h-full items-center justify-center text-neutral-400">
+              Select or create a page to get started.
+            </div>
+          )}
+        </main>
+      </div>
+    </div>
   );
 }
