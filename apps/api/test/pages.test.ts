@@ -90,6 +90,16 @@ describe('workspaces & pages', () => {
     expect(((await res.json()) as { title: string }).title).toBe('Root renamed');
   });
 
+  it('persists block content and returns it on GET', async () => {
+    const content = [{ type: 'paragraph', content: 'Hello editor' }];
+    const patch = await req('PATCH', `/pages/${rootId}`, { content });
+    expect(patch.status).toBe(200);
+
+    const res = await req('GET', `/pages/${rootId}`);
+    const page = (await res.json()) as { content: Array<{ content: string }> };
+    expect(page.content[0]?.content).toBe('Hello editor');
+  });
+
   it('moves a child page to the root', async () => {
     const res = await req('POST', `/pages/${childId}/move`, { parentId: null });
     expect(res.status).toBe(200);

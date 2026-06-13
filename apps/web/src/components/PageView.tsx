@@ -1,5 +1,7 @@
+import type { PartialBlock } from '@blocknote/core';
 import { useEffect, useState } from 'react';
 import { usePage, usePageMutations } from '../features/pages';
+import { PageEditor } from './PageEditor';
 
 export function PageView({
   pageId,
@@ -27,6 +29,11 @@ export function PageView({
     }
   }
 
+  const blocks =
+    Array.isArray(page.content) && page.content.length > 0
+      ? (page.content as PartialBlock[])
+      : undefined;
+
   return (
     <div className="mx-auto max-w-3xl px-12 py-12">
       <input
@@ -37,11 +44,9 @@ export function PageView({
           if (e.key === 'Enter') e.currentTarget.blur();
         }}
         placeholder="Untitled"
-        className="w-full bg-transparent text-4xl font-bold text-neutral-900 outline-none placeholder:text-neutral-300"
+        className="mb-4 w-full bg-transparent text-4xl font-bold text-neutral-900 outline-none placeholder:text-neutral-300"
       />
-      <p className="mt-6 text-neutral-400">
-        This page is empty. A rich block editor arrives in Stage 3.
-      </p>
+      <PageEditor key={page.id} pageId={page.id} initialContent={blocks} />
     </div>
   );
 }
