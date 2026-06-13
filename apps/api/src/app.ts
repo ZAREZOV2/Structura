@@ -3,6 +3,7 @@ import { swagger } from '@elysiajs/swagger';
 import { Elysia } from 'elysia';
 import { env } from './env';
 import { AppError } from './lib/errors';
+import { authModule } from './modules/auth';
 import { healthModule } from './modules/health';
 
 /**
@@ -25,7 +26,10 @@ export const app = new Elysia()
           version: '0.0.0',
           description: 'API for Structura — a Notion-style collaborative notes app.',
         },
-        tags: [{ name: 'Health', description: 'Service health' }],
+        tags: [
+          { name: 'Health', description: 'Service health' },
+          { name: 'Auth', description: 'Authentication & sessions' },
+        ],
       },
     }),
   )
@@ -50,6 +54,7 @@ export const app = new Elysia()
     return { error: 'INTERNAL', message, statusCode: 500 };
   })
   .get('/', () => ({ name: 'structura-api', version: '0.0.0' }))
-  .use(healthModule);
+  .use(healthModule)
+  .use(authModule);
 
 export type App = typeof app;
