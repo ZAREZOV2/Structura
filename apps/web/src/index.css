@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+/* Use a class on <html> to toggle dark mode instead of the OS preference,
+   so the in-app Light/Dark/System switch is authoritative. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+html {
+  background-color: #ffffff;
+}
+
+html.dark {
+  background-color: #0a0a0a;
+}

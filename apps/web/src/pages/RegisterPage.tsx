@@ -44,19 +44,24 @@ export function RegisterPage() {
           onChange={setPassword}
           autoComplete="new-password"
         />
-        <p className="mt-1 text-xs text-neutral-400">At least 8 characters.</p>
+        <p className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">
+          At least 8 characters.
+        </p>
         {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
         <button
           type="submit"
           disabled={submitting}
-          className="mt-6 w-full rounded-lg bg-neutral-900 py-2 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-50"
+          className="mt-6 w-full rounded-lg bg-neutral-900 py-2 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-300"
         >
           {submitting ? 'Creating…' : 'Create account'}
         </button>
       </form>
-      <p className="mt-4 text-center text-sm text-neutral-500">
+      <p className="mt-4 text-center text-sm text-neutral-500 dark:text-neutral-400">
         Already have an account?{' '}
-        <Link to="/login" className="font-medium text-neutral-900 hover:underline">
+        <Link
+          to="/login"
+          className="font-medium text-neutral-900 hover:underline dark:text-neutral-100"
+        >
           Log in
         </Link>
       </p>

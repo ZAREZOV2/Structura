@@ -19,7 +19,7 @@ export function PageView({
   }, [page]);
 
   if (isLoading || !page) {
-    return <div className="p-10 text-neutral-400">Loading…</div>;
+    return <div className="p-10 text-neutral-400 dark:text-neutral-500">Loading…</div>;
   }
 
   function commitTitle() {
@@ -44,7 +44,7 @@ export function PageView({
           if (e.key === 'Enter') e.currentTarget.blur();
         }}
         placeholder="Untitled"
-        className="mb-4 w-full bg-transparent text-4xl font-bold text-neutral-900 outline-none placeholder:text-neutral-300"
+        className="mb-4 w-full bg-transparent text-4xl font-bold text-neutral-900 outline-none placeholder:text-neutral-300 dark:text-neutral-50 dark:placeholder:text-neutral-600"
       />
       <PageEditor key={page.id} pageId={page.id} initialContent={blocks} />
     </div>
