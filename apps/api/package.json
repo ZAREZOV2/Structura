@@ -16,11 +16,7 @@
     "test": "DATABASE_PATH=:memory: bun test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bun run src/db/migrate.ts",
-    "db:studio": "bun x drizzle-kit studio",
-    "cf:dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "d1:migrate:local": "wrangler d1 migrations apply structura --local",
-    "d1:migrate:remote": "wrangler d1 migrations apply structura --remote"
+    "db:studio": "bun x drizzle-kit studio"
   },
   "dependencies": {
     "@elysiajs/cors": "^1.2.0",
@@ -34,7 +30,6 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241218.0",
     "@types/bun": "^1.1.14",
-    "drizzle-kit": "^0.30.1",
-    "wrangler": "^3.99.0"
+    "drizzle-kit": "^0.30.1"
   }
 }

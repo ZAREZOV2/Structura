@@ -1,14 +1,36 @@
 {
-  // Cloudflare Workers Static Assets config for the web SPA.
-  // The Cloudflare Git build runs `wrangler deploy` from the repo root, so the
-  // config must live here (not in apps/web). Without it the deploy fails with
-  // "Missing entry-point to Worker script or to assets directory".
+  // Single Cloudflare Worker that serves BOTH the API (Elysia + D1) and the
+  // React SPA static assets, so the frontend talks to the API same-origin
+  // (no CORS, no cross-site cookies). The Cloudflare Git build runs
+  // `wrangler deploy` from the repo root, so this config lives here.
   // "name" matches the connected Cloudflare service ("structura").
   "name": "structura",
+  "main": "apps/api/src/worker.ts",
   "compatibility_date": "2024-12-01",
+  // nodejs_compat provides AsyncLocalStorage (request-scoped DB) and exposes
+  // [vars]/secrets on process.env.
+  "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": "./apps/web/dist",
+    "binding": "ASSETS",
     // Serve index.html for unknown paths so client-side routes (e.g. /login) work.
-    "not_found_handling": "single-page-application"
+    "not_found_handling": "single-page-application",
+    // Run the Worker first so API routes reach Elysia; the Worker serves
+    // everything else via the ASSETS binding.
+    "run_worker_first": true
+  },
+  // Cloudflare D1 (serverless SQLite). Create with `bunx wrangler d1 create structura`
+  // and paste the returned database_id below.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "structura",
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "migrations_dir": "apps/api/drizzle"
+    }
+  ],
+  "vars": {
+    // Only used for CORS in cross-origin local dev; same-origin in production.
+    "WEB_ORIGIN": "https://structura.lucasmoris522.workers.dev"
   }
 }
