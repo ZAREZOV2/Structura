@@ -5,6 +5,7 @@ import { BlockNoteView } from '@blocknote/mantine';
 import { useCreateBlockNote } from '@blocknote/react';
 import { useCallback, useEffect, useRef } from 'react';
 import { useSaveContent } from '../features/pages';
+import { useTheme } from '../theme/ThemeContext';
 
 const SAVE_DEBOUNCE_MS = 600;
 
@@ -18,6 +19,7 @@ export function PageEditor({
   const save = useSaveContent();
   const saveRef = useRef(save);
   saveRef.current = save;
+  const { resolved } = useTheme();
 
   const editor = useCreateBlockNote({ initialContent });
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -37,7 +39,7 @@ export function PageEditor({
   return (
     <BlockNoteView
       editor={editor}
-      theme="light"
+      theme={resolved}
       onChange={() => {
         dirty.current = true;
         if (timer.current) clearTimeout(timer.current);

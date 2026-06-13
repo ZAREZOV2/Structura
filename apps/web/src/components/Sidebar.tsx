@@ -62,14 +62,16 @@ function PageTreeItem({
           }
         }}
         className={`group flex items-center gap-1 rounded-md px-2 py-1 text-sm ${
-          selectedId === node.id ? 'bg-neutral-200' : 'hover:bg-neutral-100'
-        } ${isDropTarget ? 'ring-1 ring-neutral-900' : ''}`}
+          selectedId === node.id
+            ? 'bg-neutral-200 dark:bg-neutral-800'
+            : 'hover:bg-neutral-100 dark:hover:bg-neutral-800/60'
+        } ${isDropTarget ? 'ring-1 ring-neutral-900 dark:ring-neutral-400' : ''}`}
         style={{ paddingLeft: `${depth * 14 + 8}px` }}
       >
         <button
           type="button"
           onClick={() => onToggle(node.id)}
-          className="w-4 shrink-0 text-neutral-400 hover:text-neutral-700"
+          className="w-4 shrink-0 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
         >
           {hasChildren ? (isOpen ? '▾' : '▸') : '·'}
         </button>
@@ -88,7 +90,7 @@ function PageTreeItem({
             mutations.createPage.mutate({ parentId: node.id });
             if (!expanded.has(node.id)) onToggle(node.id);
           }}
-          className="hidden h-5 w-5 shrink-0 rounded text-neutral-400 hover:bg-neutral-200 hover:text-neutral-700 group-hover:block"
+          className="hidden h-5 w-5 shrink-0 rounded text-neutral-400 hover:bg-neutral-200 hover:text-neutral-700 group-hover:block dark:hover:bg-neutral-700 dark:hover:text-neutral-100"
         >
           +
         </button>
@@ -96,7 +98,7 @@ function PageTreeItem({
           type="button"
           title="Delete page"
           onClick={() => mutations.deletePage.mutate(node.id)}
-          className="hidden h-5 w-5 shrink-0 rounded text-neutral-400 hover:bg-neutral-200 hover:text-red-600 group-hover:block"
+          className="hidden h-5 w-5 shrink-0 rounded text-neutral-400 hover:bg-neutral-200 hover:text-red-600 group-hover:block dark:hover:bg-neutral-700 dark:hover:text-red-400"
         >
           ×
         </button>
@@ -165,21 +167,23 @@ export function Sidebar({
   }
 
   return (
-    <aside className="flex w-64 shrink-0 flex-col border-r border-neutral-200 bg-neutral-50">
+    <aside className="flex w-64 shrink-0 flex-col border-r border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900">
       <div className="flex items-center justify-between px-4 py-3">
         <span className="truncate text-sm font-semibold">{workspaceName}</span>
         <button
           type="button"
           title="New page"
           onClick={() => mutations.createPage.mutate({})}
-          className="rounded px-2 py-0.5 text-neutral-500 hover:bg-neutral-200"
+          className="rounded px-2 py-0.5 text-neutral-500 hover:bg-neutral-200 dark:text-neutral-400 dark:hover:bg-neutral-800"
         >
           +
         </button>
       </div>
 
       <div
-        className={`flex-1 overflow-y-auto px-2 pb-4 ${isRootDropTarget ? 'bg-neutral-100' : ''}`}
+        className={`flex-1 overflow-y-auto px-2 pb-4 ${
+          isRootDropTarget ? 'bg-neutral-100 dark:bg-neutral-800/60' : ''
+        }`}
         onDragOver={(e) => {
           if (draggedId) {
             e.preventDefault();
@@ -194,7 +198,9 @@ export function Sidebar({
         }}
       >
         {tree.length === 0 && (
-          <p className="px-2 py-4 text-sm text-neutral-400">No pages yet. Click + to create one.</p>
+          <p className="px-2 py-4 text-sm text-neutral-400 dark:text-neutral-500">
+            No pages yet. Click + to create one.
+          </p>
         )}
         {tree.map((node) => (
           <PageTreeItem
