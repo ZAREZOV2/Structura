@@ -79,3 +79,13 @@ export function usePageMutations(workspaceId: string | null) {
 
   return { createPage, renamePage, deletePage, movePage };
 }
+
+/** Persists page block content. Does not invalidate caches so the editor isn't reset. */
+export function useSaveContent() {
+  return useMutation({
+    mutationFn: async (input: { id: string; content: unknown }) => {
+      const { error } = await api.pages({ id: input.id }).patch({ content: input.content });
+      if (error) throw error;
+    },
+  });
+}
