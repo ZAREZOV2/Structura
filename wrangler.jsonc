@@ -1,0 +1,14 @@
+{
+  // Cloudflare Workers Static Assets config for the web SPA.
+  // The Cloudflare Git build runs `wrangler deploy` from the repo root, so the
+  // config must live here (not in apps/web). Without it the deploy fails with
+  // "Missing entry-point to Worker script or to assets directory".
+  // "name" matches the connected Cloudflare service ("structura").
+  "name": "structura",
+  "compatibility_date": "2024-12-01",
+  "assets": {
+    "directory": "./apps/web/dist",
+    // Serve index.html for unknown paths so client-side routes (e.g. /login) work.
+    "not_found_handling": "single-page-application"
+  }
+}
