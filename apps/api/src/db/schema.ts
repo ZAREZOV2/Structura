@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import {
+  type AnyPgColumn,
   boolean,
   customType,
   index,
@@ -79,7 +80,9 @@ export const pages = pgTable(
     workspaceId: uuid('workspace_id')
       .notNull()
       .references(() => workspaces.id, { onDelete: 'cascade' }),
-    parentId: uuid('parent_id'),
+    parentId: uuid('parent_id').references((): AnyPgColumn => pages.id, {
+      onDelete: 'cascade',
+    }),
     title: text('title').notNull().default('Untitled'),
     icon: text('icon'),
     coverUrl: text('cover_url'),
