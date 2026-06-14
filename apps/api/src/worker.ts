@@ -19,7 +19,7 @@ interface Env {
 const app = createApp({ aot: false });
 
 // API routes live at the root of the Elysia app; everything else is the SPA.
-const API_PREFIXES = ['/auth', '/workspaces', '/pages', '/health'];
+const API_PREFIXES = ['/auth', '/workspaces', '/pages', '/health', '/collab'];
 
 function isApiRequest(pathname: string): boolean {
   return API_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));

@@ -15,7 +15,7 @@ Built with **Bun**, **ElysiaJS**, and **SQLite** (Cloudflare D1 in production). 
 | Database | SQLite — bun:sqlite locally, Cloudflare D1 in prod; Drizzle ORM |
 | Auth     | JWT + PBKDF2 (Web Crypto) password hashing                      |
 | Frontend | React 19, Vite, Tailwind CSS, TanStack Query, BlockNote         |
-| Realtime | Yjs + WebSocket (planned)                                        |
+| Realtime | Yjs CRDT + WebSocket (y-websocket)                               |
 
 ## Monorepo layout
 
@@ -109,8 +109,8 @@ Cloudflare-specific root scripts: `cf:dev` (run the combined Worker locally via 
 ## Roadmap
 
 Notion-first direction. Done: scaffolding, authentication, workspaces + page tree, the BlockNote
-editor with autosave, and the Cloudflare Workers + D1 port. Next: realtime collaboration (Yjs +
-WebSocket), then Notion-style databases.
+editor with autosave, Cloudflare Workers + D1 port, and Yjs realtime collaboration. Next:
+Notion-style databases (tables, kanban boards).
 
 ## License
 
