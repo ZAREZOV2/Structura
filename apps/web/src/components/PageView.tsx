@@ -1,5 +1,7 @@
 import type { PartialBlock } from '@blocknote/core';
 import { useEffect, useState } from 'react';
+import { useAuth } from '../auth/AuthContext';
+import { useCollaboration } from '../collab/useCollaboration';
 import { usePage, usePageMutations } from '../features/pages';
 import { PageEditor } from './PageEditor';
 
@@ -12,7 +14,10 @@ export function PageView({
 }) {
   const { data: page, isLoading } = usePage(pageId);
   const { renamePage } = usePageMutations(workspaceId);
+  const { user } = useAuth();
   const [title, setTitle] = useState('');
+
+  const collab = useCollaboration(pageId, user?.displayName ?? user?.email ?? 'Anonymous');
 
   useEffect(() => {
     if (page) setTitle(page.title);
@@ -46,7 +51,7 @@ export function PageView({
         placeholder="Untitled"
         className="mb-4 w-full bg-transparent text-4xl font-bold text-neutral-900 outline-none placeholder:text-neutral-300 dark:text-neutral-50 dark:placeholder:text-neutral-600"
       />
-      <PageEditor key={page.id} pageId={page.id} initialContent={blocks} />
+      <PageEditor key={pageId} pageId={page.id} initialContent={blocks} collab={collab} />
     </div>
   );
 }

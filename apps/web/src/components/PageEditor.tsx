@@ -4,6 +4,7 @@ import type { PartialBlock } from '@blocknote/core';
 import { BlockNoteView } from '@blocknote/mantine';
 import { useCreateBlockNote } from '@blocknote/react';
 import { useCallback, useEffect, useRef } from 'react';
+import type { CollaborationState } from '../collab/useCollaboration';
 import { useSaveContent } from '../features/pages';
 import { useTheme } from '../theme/ThemeContext';
 
@@ -12,16 +13,30 @@ const SAVE_DEBOUNCE_MS = 600;
 export function PageEditor({
   pageId,
   initialContent,
+  collab,
 }: {
   pageId: string;
   initialContent: PartialBlock[] | undefined;
+  collab: CollaborationState | null;
 }) {
   const save = useSaveContent();
   const saveRef = useRef(save);
   saveRef.current = save;
   const { resolved } = useTheme();
 
-  const editor = useCreateBlockNote({ initialContent });
+  const editor = useCreateBlockNote(
+    collab
+      ? {
+          collaboration: {
+            fragment: collab.fragment,
+            user: collab.user,
+            provider: collab.provider,
+          },
+        }
+      : { initialContent },
+    [collab ? collab.fragment : initialContent],
+  );
+
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dirty = useRef(false);
 

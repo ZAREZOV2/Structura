@@ -1,5 +1,6 @@
 import { cors } from '@elysiajs/cors';
 import { Elysia } from 'elysia';
+import { collabModule } from './collab';
 import { env } from './env';
 import { AppError } from './lib/errors';
 import { authModule } from './modules/auth';
@@ -48,7 +49,8 @@ export function createApp(options: { aot?: boolean } = {}) {
     .use(healthModule)
     .use(authModule)
     .use(workspacesModule)
-    .use(pagesModule);
+    .use(pagesModule)
+    .use(collabModule);
 }
 
 /** Default application instance used by Bun, tests & Eden. */
