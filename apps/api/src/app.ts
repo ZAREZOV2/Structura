@@ -6,6 +6,7 @@ import { AppError } from './lib/errors';
 import { authModule } from './modules/auth';
 import { healthModule } from './modules/health';
 import { pagesModule } from './modules/pages';
+import { skladModule } from './modules/sklad';
 import { workspacesModule } from './modules/workspaces';
 
 /**
@@ -50,6 +51,7 @@ export function createApp(options: { aot?: boolean } = {}) {
     .use(authModule)
     .use(workspacesModule)
     .use(pagesModule)
+    .use(skladModule)
     .use(collabModule);
 }
 

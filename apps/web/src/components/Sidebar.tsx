@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { usePageMutations } from '../features/pages';
 import type { TreeNode } from '../features/types';
 
@@ -179,6 +180,14 @@ export function Sidebar({
           +
         </button>
       </div>
+
+      <Link
+        to="/sklad"
+        className="mx-2 mb-2 flex items-center gap-2 rounded-lg border border-neutral-200 px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+      >
+        <span>🏭</span>
+        <span>Sklad</span>
+      </Link>
 
       <div
         className={`flex-1 overflow-y-auto px-2 pb-4 ${
