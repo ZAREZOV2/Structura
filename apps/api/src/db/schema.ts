@@ -163,6 +163,71 @@ export const pageTags = sqliteTable(
   (t) => [primaryKey({ columns: [t.pageId, t.tagId] })],
 );
 
+/* ─── Sklad (Inventory) ─── */
+
+export const skladCategories = sqliteTable('sklad_categories', {
+  id: id(),
+  workspaceId: text('workspace_id')
+    .notNull()
+    .references(() => workspaces.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  color: text('color').notNull().default('#6366f1'),
+  icon: text('icon'),
+  ...timestamps,
+});
+
+export const skladProducts = sqliteTable(
+  'sklad_products',
+  {
+    id: id(),
+    workspaceId: text('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
+    categoryId: text('category_id').references(() => skladCategories.id, {
+      onDelete: 'set null',
+    }),
+    name: text('name').notNull(),
+    sku: text('sku'),
+    unit: text('unit').notNull().default('шт'),
+    quantity: integer('quantity').notNull().default(0),
+    minQuantity: integer('min_quantity').notNull().default(0),
+    description: text('description'),
+    imageUrl: text('image_url'),
+    ...timestamps,
+  },
+  (t) => [
+    index('sklad_products_workspace_idx').on(t.workspaceId),
+    index('sklad_products_category_idx').on(t.categoryId),
+  ],
+);
+
+export const MOVEMENT_TYPES = ['in', 'out', 'adjustment'] as const;
+export type MovementType = (typeof MOVEMENT_TYPES)[number];
+
+export const skladMovements = sqliteTable(
+  'sklad_movements',
+  {
+    id: id(),
+    workspaceId: text('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
+    productId: text('product_id')
+      .notNull()
+      .references(() => skladProducts.id, { onDelete: 'cascade' }),
+    type: text('type', { enum: MOVEMENT_TYPES }).notNull(),
+    quantity: integer('quantity').notNull(),
+    note: text('note'),
+    createdBy: text('created_by').references(() => users.id, { onDelete: 'set null' }),
+    createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (t) => [
+    index('sklad_movements_product_idx').on(t.productId),
+    index('sklad_movements_workspace_idx').on(t.workspaceId),
+  ],
+);
+
 export const schema = {
   users,
   workspaces,
@@ -171,6 +236,9 @@ export const schema = {
   links,
   tags,
   pageTags,
+  skladCategories,
+  skladProducts,
+  skladMovements,
 };
 
 // Re-export for migrations that need raw SQL helpers.
